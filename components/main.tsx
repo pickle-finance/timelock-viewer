@@ -108,7 +108,7 @@ const Main = () => {
                 <Col>
                   <Card>
                     <Text h4>
-                      <Link href={`https://etherscan.io/address/${hash}`} color>
+                      <Link href={`https://etherscan.io/tx/${hash}`} color>
                         {decodedFunction.name}
                       </Link>
                     </Text>
