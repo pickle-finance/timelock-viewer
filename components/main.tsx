@@ -108,12 +108,12 @@ const Main = () => {
                 <Col>
                   <Card>
                     <Text h4>
-                      <Link href={`https://etherscan.io/address/${hash}`} color>
+                      <Link href={`https://etherscan.io/tx/${hash}`} color>
                         {decodedFunction.name}
                       </Link>
                     </Text>
                     <Text type="secondary">
-                      <Link color href={`https://etherscan.io/addres/${from}`}>
+                      <Link color href={`https://etherscan.io/address/${from}`}>
                         Tx Sender
                       </Link>{" "}
                       | Block Number: {blockNumber} | {humanTimestamp}
