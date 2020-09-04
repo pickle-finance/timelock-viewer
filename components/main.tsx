@@ -113,7 +113,7 @@ const Main = () => {
                       </Link>
                     </Text>
                     <Text type="secondary">
-                      <Link color href={`https://etherscan.io/addres/${from}`}>
+                      <Link color href={`https://etherscan.io/address/${from}`}>
                         Tx Sender
                       </Link>{" "}
                       | Block Number: {blockNumber} | {humanTimestamp}
@@ -135,9 +135,12 @@ const Main = () => {
       <Row style={{ textAlign: "center" }}>
         <Col>
           <Text h5>
-            By{" "}
+            by{" "}
             <Link color href="https://twitter.com/kendricktrh">
               @kendricktrh
+            </Link>,{' '}
+            <Link color href="https://github.com/abstracted-finance/sushi-txs-wtf">
+              code
             </Link>
           </Text>
         </Col>
