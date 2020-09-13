@@ -16,13 +16,16 @@ import { useState, useEffect } from "react";
 
 import masterchefAbi from "./masterchef-abi.json";
 import timelockAbi from "./timelock-abi.json";
+import gnosisSafeAbi from "./gnosis-safe-abi.json";
 
-const timelockAddress = "0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1";
+const devAddress = "0x9d074E37d408542FD38be78848e8814AFB38db17";
+const timelockAddress = "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0";
 const etherscanProvider = new ethers.providers.EtherscanProvider(1);
 
 // Timelock contract
 abiDecoder.addABI(timelockAbi);
 abiDecoder.addABI(masterchefAbi);
+abiDecoder.addABI(gnosisSafeAbi);
 
 // Transactions to help decode
 // queueTransaction, cancelTransaction, executeTransaction
@@ -37,12 +40,22 @@ const Main = () => {
 
   const getHistory = async () => {
     // Don't want first tx, as that is contract data
-    const h = await etherscanProvider.getHistory(timelockAddress);
+    const h = await etherscanProvider.getHistory(devAddress);
     const newest = h.slice(1).reverse();
 
-    const decoded = newest.map(
-      ({ data, from, blockNumber, timestamp, hash }) => {
-        const decodedFunction = abiDecoder.decodeMethod(data);
+    const decoded = newest
+      .map(({ data, from, blockNumber, timestamp, hash }) => {
+        const tx = abiDecoder.decodeMethod(data);
+
+        // Only pay attention to timelock contract
+        if (
+          !(tx.params[0].value.toLowerCase() === timelockAddress.toLowerCase())
+        ) {
+          return null;
+        }
+
+        // 2 is the data
+        const decodedFunction = abiDecoder.decodeMethod(tx.params[2].value);
 
         if (specialFunctionNames.includes(decodedFunction.name)) {
           // target, value, signature, data, eta
@@ -70,8 +83,10 @@ const Main = () => {
           blockNumber,
           hash,
         };
-      }
-    );
+      })
+      .filter((x) => x !== null);
+
+    console.log(decoded);
 
     setHistory(decoded);
   };
@@ -84,15 +99,24 @@ const Main = () => {
 
   return (
     <Page>
-      <Text h2>SushiSwap Timelock Transactions</Text>
+      <Text h2>Pickle Finance Timelock Transactions</Text>
       <Text type="secondary">
-        Only last 10,000 transactions displayed.{" "}
+        Only last 10,000 transactions displayed. The transactions are executed
+        from a{" "}
         <Link
           color
-          href="https://etherscan.io/address/0x9a8541ddf3a932a9a922b607e9cf7301f1d47bd1"
+          href="https://etherscan.io/address/0x9d074E37d408542FD38be78848e8814AFB38db17"
         >
-          Timelock Contract.
+          multisig wallet
         </Link>
+        , which is why is isn't showing up on the{" "}
+        <Link
+          color
+          href="https://etherscan.io/address/0xc2d82a3e2bae0a50f4aeb438285804354b467bc0"
+        >
+          timelock contract
+        </Link>
+        .
       </Text>
       <Spacer y={0.33} />
       {history.length === 0 && <Loading>Loading</Loading>}
@@ -138,8 +162,12 @@ const Main = () => {
             by{" "}
             <Link color href="https://twitter.com/kendricktrh">
               @kendricktrh
-            </Link>,{' '}
-            <Link color href="https://github.com/abstracted-finance/sushi-txs-wtf">
+            </Link>
+            ,{" "}
+            <Link
+              color
+              href="https://github.com/abstracted-finance/pickle-txs-wtf"
+            >
               code
             </Link>
           </Text>

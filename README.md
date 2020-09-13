@@ -1,5 +1,5 @@
-# Sushi Timelock Transaction Viewer
+# Pickle Timelock Transaction Viewer
 
-Track SushiSwap's timelock contract.
+Track Pickle's timelock contract.
 
-https://sushi-timelock.txs.wtf/
+https://pickle-timelock.txs.wtf/
