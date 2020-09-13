@@ -109,7 +109,7 @@ const Main = () => {
         >
           multisig wallet
         </Link>
-        , which is why is isn't showing up on the{" "}
+        , which is why it isn't showing up on the{" "}
         <Link
           color
           href="https://etherscan.io/address/0xc2d82a3e2bae0a50f4aeb438285804354b467bc0"
