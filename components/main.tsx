@@ -8,6 +8,7 @@ import {
   Card,
   Loading,
   Table,
+  Dot
 } from "@zeit-ui/react";
 
 import { ethers } from "ethers";
@@ -21,6 +22,7 @@ import gnosisSafeAbi from "./gnosis-safe-abi.json";
 const devAddress = "0x9d074E37d408542FD38be78848e8814AFB38db17";
 const timelockAddress = "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0";
 const etherscanProvider = new ethers.providers.EtherscanProvider(1);
+const infuraProvider = new ethers.providers.InfuraProvider(1);
 
 // Timelock contract
 abiDecoder.addABI(timelockAbi);
@@ -86,9 +88,22 @@ const Main = () => {
       })
       .filter((x) => x !== null);
 
-    console.log(decoded);
+    const receipts = await Promise.all(
+      decoded.map((x) => infuraProvider.getTransactionReceipt(x.hash))
+    );
 
-    setHistory(decoded);
+    const decodedWithStatus = decoded.map((x, i) => {
+      return {
+        ...x,
+        status: receipts[i].status,
+      };
+    });
+
+    console.log(receipts)
+
+    console.log(decodedWithStatus)
+
+    setHistory(decodedWithStatus);
   };
 
   useEffect(() => {
@@ -135,6 +150,9 @@ const Main = () => {
                       <Link href={`https://etherscan.io/tx/${hash}`} color>
                         {decodedFunction.name}
                       </Link>
+                      {
+                        x.status === 0 && <Dot style={{ marginLeft: '10px' }} type="error">Tx reverted</Dot>
+                      }
                     </Text>
                     <Text type="secondary">
                       <Link color href={`https://etherscan.io/address/${from}`}>
