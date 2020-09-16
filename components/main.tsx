@@ -8,13 +8,14 @@ import {
   Card,
   Loading,
   Table,
-  Dot
+  Dot,
 } from "@zeit-ui/react";
 
 import { ethers } from "ethers";
 import { default as abiDecoder } from "abi-decoder";
 import { useState, useEffect } from "react";
 
+import moment from "moment";
 import masterchefAbi from "./masterchef-abi.json";
 import timelockAbi from "./timelock-abi.json";
 import gnosisSafeAbi from "./gnosis-safe-abi.json";
@@ -44,6 +45,8 @@ const Main = () => {
     // Don't want first tx, as that is contract data
     const h = await etherscanProvider.getHistory(devAddress);
     const newest = h.slice(1).reverse();
+
+    const now = new Date().getTime();
 
     const decoded = newest
       .map(({ data, from, blockNumber, timestamp, hash }) => {
@@ -78,6 +81,21 @@ const Main = () => {
             "[" + decodedData.map((x) => x.toString()).join(", ") + "]";
         }
 
+        // ETA
+        decodedFunction.params = decodedFunction.params.map((x) => {
+          if (x.name === "eta") {
+            const t = parseInt(x.value) * 1000;
+            const formattedTime = moment(t).from(now);
+
+            return {
+              ...x,
+              value: `${x.value} (${formattedTime})`,
+            };
+          }
+
+          return x;
+        });
+
         return {
           decodedFunction,
           from,
@@ -98,10 +116,6 @@ const Main = () => {
         status: receipts[i].status,
       };
     });
-
-    console.log(receipts)
-
-    console.log(decodedWithStatus)
 
     setHistory(decodedWithStatus);
   };
@@ -139,7 +153,9 @@ const Main = () => {
       {history.length > 0 &&
         history.map((x) => {
           const { decodedFunction, blockNumber, from, hash, timestamp } = x;
-          const humanTimestamp = new Date(timestamp * 1000).toTimeString();
+          const now = Date.now();
+
+          const humanBefore = moment(timestamp * 1000).from(now);
 
           return (
             <>
@@ -150,15 +166,17 @@ const Main = () => {
                       <Link href={`https://etherscan.io/tx/${hash}`} color>
                         {decodedFunction.name}
                       </Link>
-                      {
-                        x.status === 0 && <Dot style={{ marginLeft: '10px' }} type="error">Tx reverted</Dot>
-                      }
+                      {x.status === 0 && (
+                        <Dot style={{ marginLeft: "10px" }} type="error">
+                          Tx reverted
+                        </Dot>
+                      )}
                     </Text>
                     <Text type="secondary">
                       <Link color href={`https://etherscan.io/address/${from}`}>
                         Tx Sender
                       </Link>{" "}
-                      | Block Number: {blockNumber} | {humanTimestamp}
+                      | Block Number: {blockNumber} | {humanBefore}
                     </Text>
                     <Table data={decodedFunction.params}>
                       <Table.Column prop="name" label="name" />

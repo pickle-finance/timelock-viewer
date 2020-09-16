@@ -12,6 +12,7 @@
     "@zeit-ui/react": "^1.8.1",
     "abi-decoder": "^2.3.0",
     "ethers": "^5.0.9",
+    "moment": "^2.28.0",
     "next": "9.5.3",
     "react": "16.13.1",
     "react-dom": "16.13.1",
