@@ -22,7 +22,10 @@ import gnosisSafeAbi from "./gnosis-safe-abi.json";
 
 const devAddress = "0x9d074E37d408542FD38be78848e8814AFB38db17";
 const timelockAddress = "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0";
-const etherscanProvider = new ethers.providers.EtherscanProvider(1);
+const etherscanProvider = new ethers.providers.EtherscanProvider(
+  1,
+  "QJPHEUVRS84V4KH16EG1YTUQMHJMH9PBBK"
+);
 const infuraProvider = new ethers.providers.InfuraProvider(1);
 
 // Timelock contract
@@ -78,7 +81,7 @@ const Main = () => {
           );
 
           decodedFunction.params[3].value =
-            "[" + decodedData.map((x) => x.toString()).join(", ") + "]";
+            "[" + decodedData.map((x) => x.toString()).join(", ") + "]" + "\n" + data;
         }
 
         // ETA
@@ -123,7 +126,11 @@ const Main = () => {
   useEffect(() => {
     if (history.length > 0) return;
 
-    getHistory();
+    try {
+      getHistory();
+    } catch (e) {
+      console.log("ERROR");
+    }
   }, []);
 
   return (
