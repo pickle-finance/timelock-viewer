@@ -81,7 +81,11 @@ const Main = () => {
           );
 
           decodedFunction.params[3].value =
-            "[" + decodedData.map((x) => x.toString()).join(", ") + "]" + "\n" + data;
+            "[" +
+            decodedData.map((x) => x.toString()).join(", ") +
+            "]" +
+            "\n" +
+            data;
         }
 
         // ETA
@@ -185,8 +189,11 @@ const Main = () => {
                       </Link>{" "}
                       | Block Number: {blockNumber} | {humanBefore}
                     </Text>
-                    <Table data={decodedFunction.params}>
-                      <Table.Column prop="name" label="name" />
+                    <Table
+                      data={decodedFunction.params}
+                      style={{ wordBreak: "break-word" }}
+                    >
+                      <Table.Column prop="name" label="name" width={200} />
                       <Table.Column prop="value" label="value" />
                     </Table>
                   </Card>
