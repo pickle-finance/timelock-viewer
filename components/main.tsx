@@ -214,26 +214,6 @@ const Main = () => {
             </>
           );
         })}
-
-      <Spacer y={1} />
-
-      <Row style={{ textAlign: "center" }}>
-        <Col>
-          <Text h5>
-            by{" "}
-            <Link color href="https://twitter.com/kendricktrh">
-              @kendricktrh
-            </Link>
-            ,{" "}
-            <Link
-              color
-              href="https://github.com/abstracted-finance/pickle-txs-wtf"
-            >
-              code
-            </Link>
-          </Text>
-        </Col>
-      </Row>
     </Page>
   );
 };
