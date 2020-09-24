@@ -21,7 +21,16 @@ import timelockAbi from "./timelock-abi.json";
 import gnosisSafeAbi from "./gnosis-safe-abi.json";
 
 const devAddress = "0x9d074E37d408542FD38be78848e8814AFB38db17";
-const timelockAddress = "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0";
+const timelockAddresses = [
+  "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0",
+  "0x0040E05CE9A5fc9C0aBF89889f7b60c2fC278416",
+  "0xD92c7fAa0Ca0e6AE4918f3a83d9832d9CAEAA0d3",
+].map((x) => x.toLowerCase());
+const timelockNames = {
+  '0xc2d82a3e2bae0a50f4aeb438285804354b467bc0': '48 hour Timelock',
+  '0x0040e05ce9a5fc9c0abf89889f7b60c2fc278416': '24 hour Timelock',
+  '0xd92c7faa0ca0e6ae4918f3a83d9832d9caeaa0d3': '12 hour Timelock',
+}
 const etherscanProvider = new ethers.providers.EtherscanProvider(
   1,
   "QJPHEUVRS84V4KH16EG1YTUQMHJMH9PBBK"
@@ -55,10 +64,10 @@ const Main = () => {
       .map(({ data, from, blockNumber, timestamp, hash }) => {
         const tx = abiDecoder.decodeMethod(data);
 
+        const to = tx.params[0].value.toLowerCase();
+
         // Only pay attention to timelock contract
-        if (
-          !(tx.params[0].value.toLowerCase() === timelockAddress.toLowerCase())
-        ) {
+        if (!timelockAddresses.includes(to)) {
           return null;
         }
 
@@ -106,6 +115,7 @@ const Main = () => {
         return {
           decodedFunction,
           from,
+          to,
           timestamp,
           blockNumber,
           hash,
@@ -163,7 +173,7 @@ const Main = () => {
 
       {history.length > 0 &&
         history.map((x) => {
-          const { decodedFunction, blockNumber, from, hash, timestamp } = x;
+          const { decodedFunction, blockNumber, from, to, hash, timestamp } = x;
           const now = Date.now();
 
           const humanBefore = moment(timestamp * 1000).from(now);
@@ -176,7 +186,8 @@ const Main = () => {
                     <Text h4>
                       <Link href={`https://etherscan.io/tx/${hash}`} color>
                         {decodedFunction.name}
-                      </Link>
+                      </Link>{' '}
+                      ({timelockNames[to]})
                       {x.status === 0 && (
                         <Dot style={{ marginLeft: "10px" }} type="error">
                           Tx reverted
