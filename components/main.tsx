@@ -123,14 +123,14 @@ const Main = () => {
       })
       .filter((x) => x !== null);
 
-    const receipts = await Promise.all(
-      decoded.map((x) => infuraProvider.getTransactionReceipt(x.hash))
-    );
+    // const receipts = await Promise.all(
+    //   decoded.map((x) => infuraProvider.getTransactionReceipt(x.hash))
+    // );
 
     const decodedWithStatus = decoded.map((x, i) => {
       return {
         ...x,
-        status: receipts[i].status,
+        status: 1 // receipts[i].status,
       };
     });
 
