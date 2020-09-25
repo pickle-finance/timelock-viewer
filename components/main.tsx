@@ -261,19 +261,21 @@ const Main = () => {
           <Table.Column
             prop="txType"
             label={
-              <>
-                TX TYPE&nbsp;&nbsp;
-                <Input
-                  size="mini"
-                  width="100px"
-                  status="secondary"
-                  onChange={(e) => {
-                    setTxTypeFilter(e.target.value);
-                  }}
-                  value={txTypeFilter}
-                  placeholder="FILTER TX TYPE"
-                />
-              </>
+              (
+                <>
+                  TX TYPE&nbsp;&nbsp;
+                  <Input
+                    size="mini"
+                    width="100px"
+                    status="secondary"
+                    onChange={(e) => {
+                      setTxTypeFilter(e.target.value);
+                    }}
+                    value={txTypeFilter}
+                    placeholder="FILTER TX TYPE"
+                  />
+                </>
+              ) as any
             }
           />
           <Table.Column prop="to" label="to" />
@@ -283,37 +285,40 @@ const Main = () => {
           <Table.Column
             prop="signature"
             label={
-              <>
-                signature&nbsp;&nbsp;
-                <Input
-                  size="mini"
-                  width="100px"
-                  status="secondary"
-                  onChange={(e) => {
-                    setFunctionSignatureFilter(e.target.value);
-                  }}
-                  value={functionSignatureFilter}
-                  placeholder="FILTER SIG"
-                />
-              </>
+              (
+                <>
+                  signature&nbsp;&nbsp;
+                  <Input
+                    size="mini"
+                    width="100px"
+                    status="secondary"
+                    onChange={(e) => {
+                      setFunctionSignatureFilter(e.target.value);
+                    }}
+                    value={functionSignatureFilter}
+                    placeholder="FILTER SIG"
+                  />
+                </>
+              ) as any
             }
           />
           <Table.Column
-            style={{ wordBreak: "break-word" }}
             prop="data"
             label={
-              <>
-                data&nbsp;&nbsp;
-                <Checkbox
-                  checked={showRawData}
-                  onChange={(e) => {
-                    setShowRawData(!showRawData);
-                  }}
-                  size="mini"
-                >
-                  show raw
-                </Checkbox>
-              </>
+              (
+                <>
+                  data&nbsp;&nbsp;
+                  <Checkbox
+                    checked={showRawData}
+                    onChange={(e) => {
+                      setShowRawData(!showRawData);
+                    }}
+                    size="mini"
+                  >
+                    show raw
+                  </Checkbox>
+                </>
+              ) as any
             }
           />
           <Table.Column prop="eta" label="eta" />
