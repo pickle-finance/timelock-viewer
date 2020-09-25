@@ -3,11 +3,11 @@ import {
   Text,
   Spacer,
   Link,
-  Row,
-  Col,
-  Card,
   Loading,
   Table,
+  Input,
+  Checkbox,
+  Textarea,
   Dot,
 } from "@zeit-ui/react";
 
@@ -27,10 +27,13 @@ const timelockAddresses = [
   "0xD92c7fAa0Ca0e6AE4918f3a83d9832d9CAEAA0d3",
 ].map((x) => x.toLowerCase());
 const timelockNames = {
-  '0xc2d82a3e2bae0a50f4aeb438285804354b467bc0': '48 hour Timelock',
-  '0x0040e05ce9a5fc9c0abf89889f7b60c2fc278416': '24 hour Timelock',
-  '0xd92c7faa0ca0e6ae4918f3a83d9832d9caeaa0d3': '12 hour Timelock',
-}
+  "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0": "48 hour Timelock",
+  "0x0040e05ce9a5fc9c0abf89889f7b60c2fc278416": "24 hour Timelock",
+  "0xd92c7faa0ca0e6ae4918f3a83d9832d9caeaa0d3": "12 hour Timelock",
+};
+const targetNames = {
+  "0xbd17b1ce622d73bd438b9e658aca5996dc394b0d": "Masterchef",
+};
 const etherscanProvider = new ethers.providers.EtherscanProvider(
   1,
   "QJPHEUVRS84V4KH16EG1YTUQMHJMH9PBBK"
@@ -52,6 +55,9 @@ const specialFunctionNames = [
 
 const Main = () => {
   const [history, setHistory] = useState([]);
+  const [showRawData, setShowRawData] = useState(false);
+  const [functionSignatureFilter, setFunctionSignatureFilter] = useState("");
+  const [txTypeFilter, setTxTypeFilter] = useState("");
 
   const getHistory = async () => {
     // Don't want first tx, as that is contract data
@@ -90,14 +96,12 @@ const Main = () => {
           );
 
           decodedFunction.params[3].value =
-            "[" +
-            decodedData.map((x) => x.toString()).join(", ") +
-            "]" +
-            "\n" +
-            data;
+            "[" + decodedData.map((x) => x.toString()).join(", ") + "]";
+
+          decodedFunction.params[3].rawValue = data;
         }
 
-        // ETA
+        // ETA in human reable format
         decodedFunction.params = decodedFunction.params.map((x) => {
           if (x.name === "eta") {
             const t = parseInt(x.value) * 1000;
@@ -113,28 +117,73 @@ const Main = () => {
         });
 
         return {
-          decodedFunction,
-          from,
-          to,
-          timestamp,
-          blockNumber,
-          hash,
+          decodedFunctionRaw: JSON.stringify(
+            decodedFunction.params.map((x) => {
+              return { k: x.name, v: x.value };
+            })
+          ),
+          txTypeRaw: decodedFunction.name,
+          txType: (
+            <Link color href={`https://etherscan.io/tx/${hash}`}>
+              {decodedFunction.name}
+            </Link>
+          ),
+          to: (
+            <Link color href={`https://etherscan.io/address/${to}`}>
+              {timelockNames[to]}
+            </Link>
+          ),
+          timestamp: moment(timestamp * 1000).from(Date.now()),
+          target: decodedFunction.params[0].value,
+          value: decodedFunction.params[1].value,
+          signature: decodedFunction.params[2].value,
+          data: (
+            <Textarea
+              minHeight="3"
+              width="100%"
+              value={decodedFunction.params[3].value}
+            ></Textarea>
+          ),
+          rawData: (
+            <Textarea
+              minHeight="3"
+              width="100%"
+              value={decodedFunction.params[3].rawValue}
+            ></Textarea>
+          ),
+          eta: decodedFunction.params[4].value,
         };
       })
       .filter((x) => x !== null);
 
-    // const receipts = await Promise.all(
-    //   decoded.map((x) => infuraProvider.getTransactionReceipt(x.hash))
-    // );
+    // Is this queueTransaction executed?
+    const executedTransactions = decoded
+      .filter((x) => x.txTypeRaw.toLowerCase() === "executetransaction")
+      .map((x) => x.decodedFunctionRaw);
 
-    const decodedWithStatus = decoded.map((x, i) => {
-      return {
-        ...x,
-        status: 1 // receipts[i].status,
-      };
+    const cancelledTransactions = decoded
+      .filter((x) => x.txTypeRaw.toLowerCase() === "canceltransaction")
+      .map((x) => x.decodedFunctionRaw);
+
+    const decodedWithContext = decoded.map((x) => {
+      if (x.txTypeRaw.toLowerCase() === "queuetransaction") {
+        if (cancelledTransactions.includes(x.decodedFunctionRaw)) {
+          return { executed: <Dot type="error"></Dot>, ...x };
+        }
+
+        if (!executedTransactions.includes(x.decodedFunctionRaw)) {
+          return { executed: <Dot type="warning"></Dot>, ...x };
+        }
+      }
+
+      return { executed: <Dot type="success"></Dot>, ...x };
     });
 
-    setHistory(decodedWithStatus);
+    setHistory(
+      decodedWithContext.map((x, i) => {
+        return { index: i, ...x };
+      })
+    );
   };
 
   useEffect(() => {
@@ -148,7 +197,15 @@ const Main = () => {
   }, []);
 
   return (
-    <Page>
+    <Page
+      size="large"
+      style={{
+        minWidth: "100vw",
+        height: "100vh",
+        overflow: "scroll",
+        whiteSpace: "nowrap",
+      }}
+    >
       <Text h2>Pickle Finance Timelock Transactions</Text>
       <Text type="secondary">
         Only last 10,000 transactions displayed. The transactions are executed
@@ -170,50 +227,98 @@ const Main = () => {
       </Text>
       <Spacer y={0.33} />
       {history.length === 0 && <Loading>Loading</Loading>}
+      {history.length > 0 && (
+        <Table
+          style={{
+            textAlign: "left",
+          }}
+          data={history
+            .map((x) => {
+              if (showRawData) {
+                return { ...x, data: x.rawData };
+              }
 
-      {history.length > 0 &&
-        history.map((x) => {
-          const { decodedFunction, blockNumber, from, to, hash, timestamp } = x;
-          const now = Date.now();
+              return x;
+            })
+            .filter((x) => {
+              let passed = true;
+              if (functionSignatureFilter !== "") {
+                passed = x.signature
+                  .toLowerCase()
+                  .includes(functionSignatureFilter.toLowerCase());
+              }
 
-          const humanBefore = moment(timestamp * 1000).from(now);
+              if (txTypeFilter !== "") {
+                passed = x.txTypeRaw
+                  .toLowerCase()
+                  .includes(txTypeFilter.toLowerCase());
+              }
 
-          return (
-            <>
-              <Row>
-                <Col>
-                  <Card>
-                    <Text h4>
-                      <Link href={`https://etherscan.io/tx/${hash}`} color>
-                        {decodedFunction.name}
-                      </Link>{' '}
-                      ({timelockNames[to]})
-                      {x.status === 0 && (
-                        <Dot style={{ marginLeft: "10px" }} type="error">
-                          Tx reverted
-                        </Dot>
-                      )}
-                    </Text>
-                    <Text type="secondary">
-                      <Link color href={`https://etherscan.io/address/${from}`}>
-                        Tx Sender
-                      </Link>{" "}
-                      | Block Number: {blockNumber} | {humanBefore}
-                    </Text>
-                    <Table
-                      data={decodedFunction.params}
-                      style={{ wordBreak: "break-word" }}
-                    >
-                      <Table.Column prop="name" label="name" width={200} />
-                      <Table.Column prop="value" label="value" />
-                    </Table>
-                  </Card>
-                </Col>
-              </Row>
-              <Spacer y={0.5} />
-            </>
-          );
-        })}
+              return passed;
+            })}
+        >
+          <Table.Column prop="executed" label="Executed" />
+          <Table.Column
+            prop="txType"
+            label={
+              <>
+                TX TYPE&nbsp;&nbsp;
+                <Input
+                  size="mini"
+                  width="100px"
+                  status="secondary"
+                  onChange={(e) => {
+                    setTxTypeFilter(e.target.value);
+                  }}
+                  value={txTypeFilter}
+                  placeholder="FILTER TX TYPE"
+                />
+              </>
+            }
+          />
+          <Table.Column prop="to" label="to" />
+          <Table.Column prop="timestamp" label="timestamp" />
+          <Table.Column prop="target" label="target" />
+          <Table.Column prop="value" label="value" />
+          <Table.Column
+            prop="signature"
+            label={
+              <>
+                signature&nbsp;&nbsp;
+                <Input
+                  size="mini"
+                  width="100px"
+                  status="secondary"
+                  onChange={(e) => {
+                    setFunctionSignatureFilter(e.target.value);
+                  }}
+                  value={functionSignatureFilter}
+                  placeholder="FILTER SIG"
+                />
+              </>
+            }
+          />
+          <Table.Column
+            style={{ wordBreak: "break-word" }}
+            prop="data"
+            label={
+              <>
+                data&nbsp;&nbsp;
+                <Checkbox
+                  checked={showRawData}
+                  onChange={(e) => {
+                    setShowRawData(!showRawData);
+                  }}
+                  size="mini"
+                >
+                  show raw
+                </Checkbox>
+              </>
+            }
+          />
+          <Table.Column prop="eta" label="eta" />
+        </Table>
+      )}
     </Page>
   );
 };
