@@ -118,6 +118,7 @@ const Main = () => {
         });
 
         return {
+          hash,
           decodedFunctionRaw: JSON.stringify(
             decodedFunction.params.map((x) => {
               return { k: x.name, v: x.value };
@@ -157,7 +158,19 @@ const Main = () => {
       })
       .filter((x) => x !== null);
 
-    // Is this queueTransaction executed?
+    // Key: decodedFunctionRaw, Value: Hash
+    const nonqueuedTransactionKV = decoded
+      .filter((x) => x.txTypeRaw.toLowerCase() !== "queuetransaction")
+      .reduce((acc, x) => {
+        // Order matters here as the transactions are sorted descending via timestamp
+        // So if we have 2 execute tx's w/ the same params,
+        // the latest one will be the successful one.
+        return {
+          [x.decodedFunctionRaw]: x.hash,
+          ...acc,
+        };
+      }, {});
+
     const executedTransactions = decoded
       .filter((x) => x.txTypeRaw.toLowerCase() === "executetransaction")
       .map((x) => x.decodedFunctionRaw);
@@ -171,27 +184,50 @@ const Main = () => {
         if (cancelledTransactions.includes(x.decodedFunctionRaw)) {
           return {
             status: (
-              <Tooltip text="Cancelled">
+              <Tooltip
+                text={
+                  <Link
+                    color
+                    href={`https://etherscan.io/tx/${
+                      nonqueuedTransactionKV[x.decodedFunctionRaw]
+                    }`}
+                  >
+                    Cancelled
+                  </Link>
+                }
+              >
                 <Dot></Dot>
               </Tooltip>
             ),
             ...x,
           };
         }
-        if (!executedTransactions.includes(x.decodedFunctionRaw)) {
+        if (executedTransactions.includes(x.decodedFunctionRaw)) {
           return {
             status: (
-              <Tooltip text="Queued">
-                <Dot type="warning"></Dot>
+              <Tooltip
+                text={
+                  <Link
+                    color
+                    href={`https://etherscan.io/tx/${
+                      nonqueuedTransactionKV[x.decodedFunctionRaw]
+                    }`}
+                  >
+                    Executed
+                  </Link>
+                }
+              >
+                <Dot type="success"></Dot>
               </Tooltip>
             ),
             ...x,
           };
         }
+
         return {
           status: (
-            <Tooltip text="Executed">
-              <Dot type="success"></Dot>
+            <Tooltip text="Queued">
+              <Dot type="warning"></Dot>
             </Tooltip>
           ),
           ...x,
@@ -271,7 +307,7 @@ const Main = () => {
               }
 
               if (txTypeFilter !== "") {
-                passed = x.txTypeRaw
+                passed = passed && x.txTypeRaw
                   .toLowerCase()
                   .includes(txTypeFilter.toLowerCase());
               }
