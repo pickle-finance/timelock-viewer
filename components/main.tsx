@@ -9,6 +9,7 @@ import {
   Checkbox,
   Textarea,
   Dot,
+  Tooltip,
 } from "@zeit-ui/react";
 
 import { ethers } from "ethers";
@@ -168,15 +169,36 @@ const Main = () => {
     const decodedWithContext = decoded.map((x) => {
       if (x.txTypeRaw.toLowerCase() === "queuetransaction") {
         if (cancelledTransactions.includes(x.decodedFunctionRaw)) {
-          return { executed: <Dot type="error"></Dot>, ...x };
+          return {
+            executed: (
+              <Tooltip text="Cancelled">
+                <Dot></Dot>
+              </Tooltip>
+            ),
+            ...x,
+          };
         }
-
         if (!executedTransactions.includes(x.decodedFunctionRaw)) {
-          return { executed: <Dot type="warning"></Dot>, ...x };
+          return {
+            executed: (
+              <Tooltip text="Queued">
+                <Dot type="warning"></Dot>
+              </Tooltip>
+            ),
+            ...x,
+          };
         }
+        return {
+          executed: (
+            <Tooltip text="Executed">
+              <Dot type="success"></Dot>
+            </Tooltip>
+          ),
+          ...x,
+        };
       }
 
-      return { executed: <Dot type="success"></Dot>, ...x };
+      return { ...x };
     });
 
     setHistory(
@@ -266,7 +288,7 @@ const Main = () => {
                   TX TYPE&nbsp;&nbsp;
                   <Input
                     size="mini"
-                    width="100px"
+                    width="120px"
                     status="secondary"
                     onChange={(e) => {
                       setTxTypeFilter(e.target.value);
