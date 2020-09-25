@@ -170,7 +170,7 @@ const Main = () => {
       if (x.txTypeRaw.toLowerCase() === "queuetransaction") {
         if (cancelledTransactions.includes(x.decodedFunctionRaw)) {
           return {
-            executed: (
+            status: (
               <Tooltip text="Cancelled">
                 <Dot></Dot>
               </Tooltip>
@@ -180,7 +180,7 @@ const Main = () => {
         }
         if (!executedTransactions.includes(x.decodedFunctionRaw)) {
           return {
-            executed: (
+            status: (
               <Tooltip text="Queued">
                 <Dot type="warning"></Dot>
               </Tooltip>
@@ -189,7 +189,7 @@ const Main = () => {
           };
         }
         return {
-          executed: (
+          status: (
             <Tooltip text="Executed">
               <Dot type="success"></Dot>
             </Tooltip>
@@ -279,7 +279,7 @@ const Main = () => {
               return passed;
             })}
         >
-          <Table.Column prop="executed" label="Executed" />
+          <Table.Column prop="status" label="status" />
           <Table.Column
             prop="txType"
             label={
