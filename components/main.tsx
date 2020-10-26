@@ -54,8 +54,35 @@ const specialFunctionNames = [
   "executeTransaction",
 ];
 
+// Addresses
+const TARGET_ADDRESS_NAMES = {
+  "0xbd17b1ce622d73bd438b9e658aca5996dc394b0d": "Masterchef",
+  "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0": "Timelock (48 hr)",
+  "0x0040e05ce9a5fc9c0abf89889f7b60c2fc278416": "Timelock (24 hr)",
+  "0xd92c7faa0ca0e6ae4918f3a83d9832d9caeaa0d3": "Timelock (12 hr)",
+  "0x2ff3e6c2e054abf45e21f790163970df82b0ea90": "Controller v3",
+  "0x6847259b2b3a4c17e7c43c54409810af48ba5210": "Controller v4",
+  "0x68d14d66b2b0d6e157c06dc8fefa3d8ba0e66a89": "psCRV v2",
+  "0x8e1ed86c27e1861d044c27b66574d6a0249a3c1c": "StrategyCurvesCRVv3_2",
+  "0xcffa068f1e44d98d3753966ebd58d4cfe3bb5162": "psUNI ETH/DAI v2",
+  "0x0697d05738b456bcc8f06023219da351ae252912": "StrategyUniEthDaiLpv4",
+  "0x53bf2e62fa20e2b4522f05de3597890ec1b352c6": "psUNI ETH/USDC v2",
+  "0xb48b92f8962f880d2f072f4e5fdfc748ceda7727": "StrategyUniEthUsdcLpv4",
+  "0x09fc573c502037b149ba87782acc81cf093ec6ef": "psUNI ETH/USDT v2",
+  "0x3577797668c6fe415b21bf85ba44df34318dd80d": "StrategyUniEthUsdtLpv4",
+  "0x1bb74b5ddc1f4fc91d6f9e7906cf68bc93538e33": "p3CRV",
+  "0x8f01bb820bcd0b0b7d873862c531a88822747042": "StrategyCurve3CRVv2",
+  "0x2e35392f4c36eba7ecafe4de34199b2373af22ec": "pRenWBtcCrv",
+  "0xb606602c2ac912b52437817add9362b87776a6a6": "StrategyCurveRenCRVv2",
+  "0xc80090aa05374d336875907372ee4ee636cbc562": "psUNI ETH/WBTC v2",
+  "0xd8de542d2140eecc49ffdf056e51aa9261f974d6": "StrategyUniEthWBtcLpv4",
+  "0x6949bb624e8e8a90f87cd2058139fcd77d2f3f87": "pDAI",
+  "0xcd892a97951d46615484359355e3ed88131f829d": "StrategyCmpV2",
+};
+
 const Main = () => {
   const [history, setHistory] = useState([]);
+  const [showRawTarget, setShowRawTarget] = useState(false);
   const [showRawData, setShowRawData] = useState(false);
   const [functionSignatureFilter, setFunctionSignatureFilter] = useState("");
   const [txTypeFilter, setTxTypeFilter] = useState("");
@@ -117,6 +144,18 @@ const Main = () => {
           return x;
         });
 
+        // Target as a link
+        const rawTarget = decodedFunction.params[0].value;
+        let target = rawTarget.toLowerCase();
+
+        if (TARGET_ADDRESS_NAMES[target]) {
+          target = (
+            <Link color href={`https://etherscan.io/address/${rawTarget}`}>
+              {TARGET_ADDRESS_NAMES[target]}
+            </Link>
+          );
+        }
+
         return {
           hash,
           decodedFunctionRaw: JSON.stringify(
@@ -136,7 +175,8 @@ const Main = () => {
             </Link>
           ),
           timestamp: moment(timestamp * 1000).from(Date.now()),
-          target: decodedFunction.params[0].value,
+          rawTarget,
+          target,
           value: decodedFunction.params[1].value,
           signature: decodedFunction.params[2].value,
           data: (
@@ -292,11 +332,16 @@ const Main = () => {
           }}
           data={history
             .map((x) => {
+              let y = x;
               if (showRawData) {
-                return { ...x, data: x.rawData };
+                y = { ...y, data: x.rawData };
               }
 
-              return x;
+              if (showRawTarget) {
+                y = { ...y, target: x.targetRaw };
+              }
+
+              return y;
             })
             .filter((x) => {
               let passed = true;
@@ -307,9 +352,11 @@ const Main = () => {
               }
 
               if (txTypeFilter !== "") {
-                passed = passed && x.txTypeRaw
-                  .toLowerCase()
-                  .includes(txTypeFilter.toLowerCase());
+                passed =
+                  passed &&
+                  x.txTypeRaw
+                    .toLowerCase()
+                    .includes(txTypeFilter.toLowerCase());
               }
 
               return passed;
@@ -338,7 +385,25 @@ const Main = () => {
           />
           <Table.Column prop="to" label="to" />
           <Table.Column prop="timestamp" label="timestamp" />
-          <Table.Column prop="target" label="target" />
+          <Table.Column
+            prop="target"
+            label={
+              (
+                <>
+                  target&nbsp;&nbsp;
+                  <Checkbox
+                    checked={showRawTarget}
+                    onChange={(e) => {
+                      setShowRawTarget(!showRawTarget);
+                    }}
+                    size="mini"
+                  >
+                    show raw
+                  </Checkbox>
+                </>
+              ) as any
+            }
+          />
           <Table.Column prop="value" label="value" />
           <Table.Column
             prop="signature"
