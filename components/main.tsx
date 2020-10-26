@@ -155,7 +155,7 @@ const Main = () => {
             </Link>
           );
         }
-
+        
         return {
           hash,
           decodedFunctionRaw: JSON.stringify(
@@ -177,7 +177,13 @@ const Main = () => {
           timestamp: moment(timestamp * 1000).from(Date.now()),
           rawTarget,
           target,
-          value: decodedFunction.params[1].value,
+          value: (
+            <Textarea
+              minHeight="1"
+              width="100%"
+              value={decodedFunction.params[1].value}
+            ></Textarea>
+          ),
           signature: decodedFunction.params[2].value,
           data: (
             <Textarea
