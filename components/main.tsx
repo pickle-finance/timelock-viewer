@@ -338,7 +338,7 @@ const Main = () => {
               }
 
               if (showRawTarget) {
-                y = { ...y, target: x.targetRaw };
+                y = { ...y, target: x.rawTarget };
               }
 
               return y;
