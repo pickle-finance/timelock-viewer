@@ -13,6 +13,7 @@ import {
 } from "@zeit-ui/react";
 
 import { ethers } from "ethers";
+import { Provider as MulticallProvider, Provider } from 'ethers-multicall'
 import { default as abiDecoder } from "abi-decoder";
 import { useState, useEffect } from "react";
 
@@ -41,6 +42,8 @@ const etherscanProvider = new ethers.providers.EtherscanProvider(
 );
 const infuraProvider = new ethers.providers.InfuraProvider(1);
 
+const multicallProvider = new MulticallProvider(infuraProvider)
+
 // Timelock contract
 abiDecoder.addABI(timelockAbi);
 abiDecoder.addABI(masterchefAbi);
@@ -63,7 +66,7 @@ const TARGET_ADDRESS_NAMES = {
   "0x2ff3e6c2e054abf45e21f790163970df82b0ea90": "Controller v3",
   "0x6847259b2b3a4c17e7c43c54409810af48ba5210": "Controller v4",
   "0x68d14d66b2b0d6e157c06dc8fefa3d8ba0e66a89": "psCRV v2",
-  "0x8e1ed86c27e1861d044c27b66574d6a0249a3c1c": "StrategyCurvesCRVv3_2",
+  "0x8e1ed86c27e1861d044c27b66574d6a0249a3c1c": "StrategyCurveSCRVv3_2",
   "0xcffa068f1e44d98d3753966ebd58d4cfe3bb5162": "psUNI ETH/DAI v2",
   "0x0697d05738b456bcc8f06023219da351ae252912": "StrategyUniEthDaiLpv4",
   "0x53bf2e62fa20e2b4522f05de3597890ec1b352c6": "psUNI ETH/USDC v2",
@@ -77,7 +80,7 @@ const TARGET_ADDRESS_NAMES = {
   "0xc80090aa05374d336875907372ee4ee636cbc562": "psUNI ETH/WBTC v2",
   "0xd8de542d2140eecc49ffdf056e51aa9261f974d6": "StrategyUniEthWBtcLpv4",
   "0x6949bb624e8e8a90f87cd2058139fcd77d2f3f87": "pDAI",
-  "0xcd892a97951d46615484359355e3ed88131f829d": "StrategyCmpV2",
+  "0xcd892a97951d46615484359355e3ed88131f829d": "StrategyCmpdDaiV2",
 };
 
 const Main = () => {
@@ -88,6 +91,8 @@ const Main = () => {
   const [txTypeFilter, setTxTypeFilter] = useState("");
 
   const getHistory = async () => {
+    await multicallProvider.init()
+
     // Don't want first tx, as that is contract data
     const h = await etherscanProvider.getHistory(devAddress);
     const newest = h.slice(1).reverse();
@@ -229,7 +234,7 @@ const Main = () => {
       if (x.txTypeRaw.toLowerCase() === "queuetransaction") {
         if (cancelledTransactions.includes(x.decodedFunctionRaw)) {
           return {
-            status: (
+            queue: (
               <Tooltip
                 text={
                   <Link
@@ -250,7 +255,7 @@ const Main = () => {
         }
         if (executedTransactions.includes(x.decodedFunctionRaw)) {
           return {
-            status: (
+            queue: (
               <Tooltip
                 text={
                   <Link
@@ -271,7 +276,7 @@ const Main = () => {
         }
 
         return {
-          status: (
+          queue: (
             <Tooltip text="Queued">
               <Dot type="warning"></Dot>
             </Tooltip>
@@ -368,7 +373,7 @@ const Main = () => {
               return passed;
             })}
         >
-          <Table.Column prop="status" label="status" />
+          <Table.Column prop="queue" label="queue" />
           <Table.Column
             prop="txType"
             label={
