@@ -9,11 +9,11 @@ import {
   Checkbox,
   Textarea,
   Dot,
-  Tooltip,
+  Tooltip
 } from "@zeit-ui/react";
 
 import { ethers } from "ethers";
-import { Provider as MulticallProvider, Provider } from 'ethers-multicall'
+import { Provider as MulticallProvider, Provider } from "ethers-multicall";
 import { default as abiDecoder } from "abi-decoder";
 import { useState, useEffect } from "react";
 
@@ -26,15 +26,15 @@ const devAddress = "0x9d074E37d408542FD38be78848e8814AFB38db17";
 const timelockAddresses = [
   "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0",
   "0x0040E05CE9A5fc9C0aBF89889f7b60c2fC278416",
-  "0xD92c7fAa0Ca0e6AE4918f3a83d9832d9CAEAA0d3",
-].map((x) => x.toLowerCase());
+  "0xD92c7fAa0Ca0e6AE4918f3a83d9832d9CAEAA0d3"
+].map(x => x.toLowerCase());
 const timelockNames = {
   "0xc2d82a3e2bae0a50f4aeb438285804354b467bc0": "48 hour Timelock",
   "0x0040e05ce9a5fc9c0abf89889f7b60c2fc278416": "24 hour Timelock",
-  "0xd92c7faa0ca0e6ae4918f3a83d9832d9caeaa0d3": "12 hour Timelock",
+  "0xd92c7faa0ca0e6ae4918f3a83d9832d9caeaa0d3": "12 hour Timelock"
 };
 const targetNames = {
-  "0xbd17b1ce622d73bd438b9e658aca5996dc394b0d": "Masterchef",
+  "0xbd17b1ce622d73bd438b9e658aca5996dc394b0d": "Masterchef"
 };
 const etherscanProvider = new ethers.providers.EtherscanProvider(
   1,
@@ -42,7 +42,7 @@ const etherscanProvider = new ethers.providers.EtherscanProvider(
 );
 const infuraProvider = new ethers.providers.InfuraProvider(1);
 
-const multicallProvider = new MulticallProvider(infuraProvider)
+const multicallProvider = new MulticallProvider(infuraProvider);
 
 // Timelock contract
 abiDecoder.addABI(timelockAbi);
@@ -54,7 +54,7 @@ abiDecoder.addABI(gnosisSafeAbi);
 const specialFunctionNames = [
   "queueTransaction",
   "cancelTransaction",
-  "executeTransaction",
+  "executeTransaction"
 ];
 
 // Addresses
@@ -80,7 +80,7 @@ const TARGET_ADDRESS_NAMES = {
   "0xc80090aa05374d336875907372ee4ee636cbc562": "psUNI ETH/WBTC v2",
   "0xd8de542d2140eecc49ffdf056e51aa9261f974d6": "StrategyUniEthWBtcLpv4",
   "0x6949bb624e8e8a90f87cd2058139fcd77d2f3f87": "pDAI",
-  "0xcd892a97951d46615484359355e3ed88131f829d": "StrategyCmpdDaiV2",
+  "0xcd892a97951d46615484359355e3ed88131f829d": "StrategyCmpdDaiV2"
 };
 
 const Main = () => {
@@ -91,7 +91,7 @@ const Main = () => {
   const [txTypeFilter, setTxTypeFilter] = useState("");
 
   const getHistory = async () => {
-    await multicallProvider.init()
+    await multicallProvider.init();
 
     // Don't want first tx, as that is contract data
     const h = await etherscanProvider.getHistory(devAddress);
@@ -118,6 +118,7 @@ const Main = () => {
           const signature = decodedFunction.params[2].value;
           const data = decodedFunction.params[3].value;
 
+          if (signature.startsWith("setMin")) return null;
           const functionParams = signature
             .split("(")[1]
             .split(")")[0]
@@ -129,20 +130,20 @@ const Main = () => {
           );
 
           decodedFunction.params[3].value =
-            "[" + decodedData.map((x) => x.toString()).join(", ") + "]";
+            "[" + decodedData.map(x => x.toString()).join(", ") + "]";
 
           decodedFunction.params[3].rawValue = data;
         }
 
         // ETA in human reable format
-        decodedFunction.params = decodedFunction.params.map((x) => {
+        decodedFunction.params = decodedFunction.params.map(x => {
           if (x.name === "eta") {
             const t = parseInt(x.value) * 1000;
             const formattedTime = moment(t).from(now);
 
             return {
               ...x,
-              value: `${x.value} (${formattedTime})`,
+              value: `${x.value} (${formattedTime})`
             };
           }
 
@@ -160,11 +161,11 @@ const Main = () => {
             </Link>
           );
         }
-        
+
         return {
           hash,
           decodedFunctionRaw: JSON.stringify(
-            decodedFunction.params.map((x) => {
+            decodedFunction.params.map(x => {
               return { k: x.name, v: x.value };
             })
           ),
@@ -204,33 +205,33 @@ const Main = () => {
               value={decodedFunction.params[3].rawValue}
             ></Textarea>
           ),
-          eta: decodedFunction.params[4].value,
+          eta: decodedFunction.params[4].value
         };
       })
-      .filter((x) => x !== null);
+      .filter(x => x !== null);
 
     // Key: decodedFunctionRaw, Value: Hash
     const nonqueuedTransactionKV = decoded
-      .filter((x) => x.txTypeRaw.toLowerCase() !== "queuetransaction")
+      .filter(x => x.txTypeRaw.toLowerCase() !== "queuetransaction")
       .reduce((acc, x) => {
         // Order matters here as the transactions are sorted descending via timestamp
         // So if we have 2 execute tx's w/ the same params,
         // the latest one will be the successful one.
         return {
           [x.decodedFunctionRaw]: x.hash,
-          ...acc,
+          ...acc
         };
       }, {});
 
     const executedTransactions = decoded
-      .filter((x) => x.txTypeRaw.toLowerCase() === "executetransaction")
-      .map((x) => x.decodedFunctionRaw);
+      .filter(x => x.txTypeRaw.toLowerCase() === "executetransaction")
+      .map(x => x.decodedFunctionRaw);
 
     const cancelledTransactions = decoded
-      .filter((x) => x.txTypeRaw.toLowerCase() === "canceltransaction")
-      .map((x) => x.decodedFunctionRaw);
+      .filter(x => x.txTypeRaw.toLowerCase() === "canceltransaction")
+      .map(x => x.decodedFunctionRaw);
 
-    const decodedWithContext = decoded.map((x) => {
+    const decodedWithContext = decoded.map(x => {
       if (x.txTypeRaw.toLowerCase() === "queuetransaction") {
         if (cancelledTransactions.includes(x.decodedFunctionRaw)) {
           return {
@@ -250,7 +251,7 @@ const Main = () => {
                 <Dot></Dot>
               </Tooltip>
             ),
-            ...x,
+            ...x
           };
         }
         if (executedTransactions.includes(x.decodedFunctionRaw)) {
@@ -271,7 +272,7 @@ const Main = () => {
                 <Dot type="success"></Dot>
               </Tooltip>
             ),
-            ...x,
+            ...x
           };
         }
 
@@ -281,7 +282,7 @@ const Main = () => {
               <Dot type="warning"></Dot>
             </Tooltip>
           ),
-          ...x,
+          ...x
         };
       }
 
@@ -312,7 +313,7 @@ const Main = () => {
         minWidth: "100vw",
         height: "100vh",
         overflow: "scroll",
-        whiteSpace: "nowrap",
+        whiteSpace: "nowrap"
       }}
     >
       <Text h2>Pickle Finance Timelock Transactions</Text>
@@ -339,10 +340,10 @@ const Main = () => {
       {history.length > 0 && (
         <Table
           style={{
-            textAlign: "left",
+            textAlign: "left"
           }}
           data={history
-            .map((x) => {
+            .map(x => {
               let y = x;
               if (showRawData) {
                 y = { ...y, data: x.rawData };
@@ -354,7 +355,7 @@ const Main = () => {
 
               return y;
             })
-            .filter((x) => {
+            .filter(x => {
               let passed = true;
               if (functionSignatureFilter !== "") {
                 passed = x.signature
@@ -384,7 +385,7 @@ const Main = () => {
                     size="mini"
                     width="120px"
                     status="secondary"
-                    onChange={(e) => {
+                    onChange={e => {
                       setTxTypeFilter(e.target.value);
                     }}
                     value={txTypeFilter}
@@ -404,7 +405,7 @@ const Main = () => {
                   target&nbsp;&nbsp;
                   <Checkbox
                     checked={showRawTarget}
-                    onChange={(e) => {
+                    onChange={e => {
                       setShowRawTarget(!showRawTarget);
                     }}
                     size="mini"
@@ -426,7 +427,7 @@ const Main = () => {
                     size="mini"
                     width="100px"
                     status="secondary"
-                    onChange={(e) => {
+                    onChange={e => {
                       setFunctionSignatureFilter(e.target.value);
                     }}
                     value={functionSignatureFilter}
@@ -444,7 +445,7 @@ const Main = () => {
                   data&nbsp;&nbsp;
                   <Checkbox
                     checked={showRawData}
-                    onChange={(e) => {
+                    onChange={e => {
                       setShowRawData(!showRawData);
                     }}
                     size="mini"
